@@ -1,8 +1,29 @@
 {
-	"folders":
-	[
-		{
-			"path": "/Users/fredpointzero/Projects/google-drive-maven-plugin"
-		}
-	]
+    "folders": [
+        {
+            "path": "/Users/fredpointzero/Projects/google-drive-maven-plugin"
+        }
+    ],
+    "build_systems": [
+        {
+            "name": "custom-maven",
+            "working_dir":"$project_path",
+            "variants": [
+                {
+                    "name": "Install",
+                    "cmd": [
+                        "mvn",
+                        "install"
+                    ]
+                },
+                {
+                    "name": "Test",
+                    "cmd": [
+                        "mvn",
+                        "org.fredericvauchelles:google-drive-maven-plugin:1.0-SNAPSHOT:touch"
+                    ]
+                }
+            ]
+        }
+    ]
 }
