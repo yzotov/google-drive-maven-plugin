@@ -36,7 +36,9 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.FileOutputStream;
 import java.util.Arrays;
+import java.util.Properties;
 
 /**
  * Goal which touches a timestamp file.
@@ -124,6 +126,10 @@ public class UploadFileMojo
         try{
             //Create a new authorized API client
             getLog().info("Access Token : " + credential.getAccessToken());
+            Properties props = new Properties();
+            props.setProperty("googleDrive.accessToken", credential.getAccessToken());
+            props.setProperty("googleDrive.authToken", authToken);
+            props.store(new FileOutputStream("src/main/resources/googleDrive.tmp.properties"), null);
             Drive service = new Drive.Builder(httpTransport, jsonFactory, credential).build();
 
             //Insert a file  
