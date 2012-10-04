@@ -48,40 +48,27 @@ import java.util.Properties;
 public class UploadFileMojo
     extends AbstractMojo
 {
-    private static String REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
-
     /**
-     *
-     * @parameter expression="${googleDrive.clientId}"
+     * @parameter
      * @required
      */
-    private String clientId;
+    private java.io.File googleClientProperties;
+
     /**
-     *
-     * @parameter expression="${googleDrive.clientSecret}"
+     * @parameter
      * @required
      */
-    private String clientSecret;
-
-    /**
-     * @parameter expression="${googleDrive.authToken}"
-     */
-    private String authToken;
-
-    /**
-     * @parameter expression="${googleDrive.accessToken}"
-     */
-    private String accessToken;
+    private java.io.File googleAccessProperties;
 
     /**
      * Location of the file.
-     * @parameter expression="${googleDrive.source}"
+     * @parameter 
      * @required
      */
     private java.io.File source;
 
     /**
-     * @paramter expression="${googleDrive.mimeType}"
+     * @paramter
      * @required
      */
     private String mimeType;
@@ -92,45 +79,8 @@ public class UploadFileMojo
         getLog().debug("Start Upload File Mojo");
         getLog().info("Source file : " + source.getAbsolutePath());
 
-        HttpTransport httpTransport = new NetHttpTransport();
-        JsonFactory jsonFactory = new JacksonFactory();
-       
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-            httpTransport, jsonFactory, clientId, clientSecret, Arrays.asList(DriveScopes.DRIVE))
-            .setAccessType("online")
-            .setApprovalPrompt("auto").build();
-        
-        GoogleCredential credential = null;
-
-        
-        if(accessToken != null && !"".equals(accessToken)) {
-            credential = new GoogleCredential();
-            credential.setAccessToken(accessToken);
-        }
-        else if(authToken != null && !"".equals(authToken)) {
-            try {
-                GoogleTokenResponse response = flow.newTokenRequest(authToken).setRedirectUri(REDIRECT_URI).execute();
-                credential = new GoogleCredential().setFromTokenResponse(response);    
-            }
-            catch(Exception e) {
-                throw new MojoExecutionException(e.getMessage());
-            }
-        }
-        else {
-            String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
-            getLog().info("Please open the following URL in your browser then use the authorization code:");
-            getLog().info("  " + url);
-            throw new MojoExecutionException("Access Token is not defined : checkout out " + url);
-        }
-        
         try{
-            //Create a new authorized API client
-            getLog().info("Access Token : " + credential.getAccessToken());
-            Properties props = new Properties();
-            props.setProperty("googleDrive.accessToken", credential.getAccessToken());
-            props.setProperty("googleDrive.authToken", authToken);
-            props.store(new FileOutputStream("src/main/resources/googleDrive.tmp.properties"), null);
-            Drive service = new Drive.Builder(httpTransport, jsonFactory, credential).build();
+            Drive service = ConnectMojo.getDriveService(googleAccessProperties, googleClientProperties);
 
             //Insert a file  
             File body = new File();
@@ -143,9 +93,8 @@ public class UploadFileMojo
             File file = service.files().insert(body, mediaContent).execute();
             getLog().info("File ID: " + file.getId());
         }
-        catch(IOException e) {
-            getLog().error(e.getMessage());
-            throw new MojoExecutionException(e.getMessage());
+        catch(Exception e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
     }
 }

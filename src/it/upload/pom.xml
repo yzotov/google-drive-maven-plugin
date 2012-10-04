@@ -31,6 +31,9 @@
         <artifactId>google-drive-maven-plugin</artifactId>
         <version>1.0-SNAPSHOT</version>
         <configuration>
+          <googleClientProperties>src/main/resources/googleDrive.properties</googleClientProperties>
+          <googleAccessProperties>src/main/resources/googleDrive.tmp.properties</googleAccessProperties>
+          <mimeType>text/plain</mimeType>
           <source>src/main/resources/file.txt</source>
         </configuration>
         <executions>
@@ -38,6 +41,7 @@
             <id>upload file</id>
             <phase>package</phase>
             <goals>
+              <goal>connect</goal>
               <goal>upload-file</goal>
             </goals>
           </execution>
