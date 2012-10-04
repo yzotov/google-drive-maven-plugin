@@ -1,4 +1,4 @@
-package org.fredericvauchelles;
+package com.fredericvauchelles;
 
 /*
  * Copyright 2001-2005 The Apache Software Foundation.
