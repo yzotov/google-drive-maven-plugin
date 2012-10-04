@@ -10,6 +10,13 @@
             "working_dir":"$project_path",
             "variants": [
                 {
+                    "name": "Clean",
+                    "cmd": [
+                        "mvn",
+                        "clean"
+                    ]
+                },
+                {
                     "name": "Install",
                     "cmd": [
                         "mvn",
@@ -20,7 +27,11 @@
                     "name": "Test",
                     "cmd": [
                         "mvn",
-                        "org.fredericvauchelles:google-drive-maven-plugin:1.0-SNAPSHOT:touch"
+                        "org.fredericvauchelles:google-drive-maven-plugin:1.0-SNAPSHOT:upload-file",
+                        "-DgoogleDrive.source=target/classes/file.txt",
+                        "-DgoogleDrive.clientId=187787441429.apps.googleusercontent.com",
+                        "-DgoogleDrive.clientSecret=lzuPRkZwE4eG_QdolLsgQ07q",
+                        "-DgoogleDrive.accessToken=4/-YfBwUYy_ruMrolC6-Z1LTgWMd0-.QsBP_JPDnaYfOl05ti8ZT3a3E0pWdAI"
                     ]
                 }
             ]
