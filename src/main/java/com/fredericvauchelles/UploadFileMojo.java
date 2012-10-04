@@ -62,6 +62,11 @@ public class UploadFileMojo
     private String clientSecret;
 
     /**
+     * @parameter expression="${googleDrive.authToken}"
+     */
+    private String authToken;
+
+    /**
      * @parameter expression="${googleDrive.accessToken}"
      */
     private String accessToken;
@@ -93,36 +98,48 @@ public class UploadFileMojo
             .setAccessType("online")
             .setApprovalPrompt("auto").build();
         
-        if(accessToken == null || "".equals(accessToken)) {
+        GoogleCredential credential = null;
+
+        
+        if(accessToken != null && !"".equals(accessToken)) {
+            credential = new GoogleCredential();
+            credential.setAccessToken(accessToken);
+        }
+        else if(authToken != null && !"".equals(authToken)) {
+            try {
+                GoogleTokenResponse response = flow.newTokenRequest(authToken).setRedirectUri(REDIRECT_URI).execute();
+                credential = new GoogleCredential().setFromTokenResponse(response);    
+            }
+            catch(Exception e) {
+                throw new MojoExecutionException(e.getMessage());
+            }
+        }
+        else {
             String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
             getLog().info("Please open the following URL in your browser then use the authorization code:");
             getLog().info("  " + url);
             throw new MojoExecutionException("Access Token is not defined : checkout out " + url);
         }
-        else {
-            try{
-                GoogleTokenResponse response = flow.newTokenRequest(accessToken).setRedirectUri(REDIRECT_URI).execute();
-                GoogleCredential credential = new GoogleCredential().setFromTokenResponse(response);
-                
-                //Create a new authorized API client
-                Drive service = new Drive.Builder(httpTransport, jsonFactory, credential).build();
-
-                //Insert a file  
-                File body = new File();
-                body.setTitle(source.getName());
-                //body.setDescription("A test document");
-                body.setMimeType(mimeType);
-                
-                FileContent mediaContent = new FileContent(mimeType, source);
-
-                File file = service.files().insert(body, mediaContent).execute();
-                getLog().info("File ID: " + file.getId());
-            }
-            catch(IOException e) {
-                getLog().error(e.getMessage());
-                throw new MojoExecutionException(e.getMessage());
-            }
-        }
         
+        try{
+            //Create a new authorized API client
+            getLog().info("Access Token : " + credential.getAccessToken());
+            Drive service = new Drive.Builder(httpTransport, jsonFactory, credential).build();
+
+            //Insert a file  
+            File body = new File();
+            body.setTitle(source.getName());
+            //body.setDescription("A test document");
+            body.setMimeType(mimeType);
+            
+            FileContent mediaContent = new FileContent(mimeType, source);
+
+            File file = service.files().insert(body, mediaContent).execute();
+            getLog().info("File ID: " + file.getId());
+        }
+        catch(IOException e) {
+            getLog().error(e.getMessage());
+            throw new MojoExecutionException(e.getMessage());
+        }
     }
 }
