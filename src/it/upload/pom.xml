@@ -20,7 +20,6 @@
             <configuration>
               <files>
                 <file>src/main/resources/googleDrive.properties</file>
-                <file>src/main/resources/googleDrive.tmp.properties</file>
               </files>
             </configuration>
           </execution>
@@ -41,7 +40,6 @@
             <id>upload file</id>
             <phase>package</phase>
             <goals>
-              <goal>connect</goal>
               <goal>upload-file</goal>
             </goals>
           </execution>

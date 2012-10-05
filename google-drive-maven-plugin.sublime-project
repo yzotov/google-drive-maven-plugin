@@ -27,7 +27,7 @@
                     "name": "Integration Test",
                     "cmd": [
                         "mvn",
-                        "integration-test"
+                        "integration-test:integration-test"
                     ]
                 }
             ]

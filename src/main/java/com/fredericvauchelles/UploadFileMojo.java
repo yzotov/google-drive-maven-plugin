@@ -80,7 +80,7 @@ public class UploadFileMojo
         getLog().info("Source file : " + source.getAbsolutePath());
 
         try{
-            Drive service = ConnectMojo.getDriveService(googleAccessProperties, googleClientProperties);
+            Drive service = ConnectMojo.getDriveService(googleAccessProperties, googleClientProperties, getLog());
 
             //Insert a file  
             File body = new File();

@@ -16,11 +16,13 @@ package com.fredericvauchelles;
  * limitations under the License.
  */
 
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpTransport;
@@ -49,26 +51,21 @@ public class ConnectMojo extends AbstractMojo
 {
     private static String REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
 
-    private static GoogleAuthorizationCodeFlow getFlow(String clientId, String clientSecret) {
-        HttpTransport httpTransport = new NetHttpTransport();
-        JsonFactory jsonFactory = new JacksonFactory();
-       
-        return new GoogleAuthorizationCodeFlow.Builder(
-            httpTransport, jsonFactory, clientId, clientSecret, Arrays.asList(DriveScopes.DRIVE))
-            .setAccessType("online")
-            .setApprovalPrompt("auto").build();
-    }
-
-    public static GoogleCredential getCredential(java.io.File googleAccessProperties, java.io.File googleClientProperties) throws IOException, Exception{
-        Properties accessProperties = new Properties();
-        accessProperties.load(new FileInputStream(googleAccessProperties));
-        String accessToken = accessProperties.getProperty("accessToken");
-        String authToken = accessProperties.getProperty("authToken");
+    public static Drive getDriveService(java.io.File googleAccessProperties, java.io.File googleClientProperties, Log logger)
+        throws IOException, Exception {
+        // Properties accessProperties = new Properties();
+        // accessProperties.load(new FileInputStream(googleAccessProperties));
+        // String accessToken = accessProperties.getProperty("accessToken");
+        // String refreshToken = accessProperties.getProperty("refreshToken");
 
         Properties clientProperties = new Properties();
         clientProperties.load(new FileInputStream(googleClientProperties));
         String clientId = clientProperties.getProperty("clientId");
         String clientSecret = clientProperties.getProperty("clientSecret");
+        String authToken = clientProperties.getProperty("authToken");
+
+        HttpTransport httpTransport = new NetHttpTransport();
+        JsonFactory jsonFactory = new JacksonFactory();
 
         if(clientId == null)
             throw new Exception("clientId is not defined in " + googleClientProperties.getAbsolutePath());
@@ -76,39 +73,39 @@ public class ConnectMojo extends AbstractMojo
         if(clientSecret == null)
             throw new Exception("clientSecret is not defined in " + googleClientProperties.getAbsolutePath());
 
-        GoogleAuthorizationCodeFlow flow = getFlow(clientProperties.getProperty("clientId"), clientProperties.getProperty("clientSecret"));
-        
-        GoogleCredential credential = null;
-        
-        if(accessToken != null && !"".equals(accessToken)) {
-            credential = new GoogleCredential();
-            credential.setAccessToken(accessToken);
-        }
-        else if(authToken != null && !"".equals(authToken)) {
-            GoogleTokenResponse response = flow.newTokenRequest(authToken).setRedirectUri(REDIRECT_URI).execute();
-            credential = new GoogleCredential().setFromTokenResponse(response);    
-        }
-        else {
-            String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
-            throw new Exception("Access Token is not defined : checkout out " + url);
-        }
-        
-        // Write connection properties
-        Properties props = new Properties();
-        props.setProperty("accessToken", credential.getAccessToken());
-        props.setProperty("authToken", authToken);
-        props.store(new FileOutputStream("src/main/resources/googleDrive.tmp.properties"), null);
+        MavenCredentialStore store = new MavenCredentialStore(logger);
 
-        return credential;
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+            httpTransport, jsonFactory, clientId, clientSecret, Arrays.asList(DriveScopes.DRIVE))
+            .setAccessType("online")
+            .setApprovalPrompt("auto")
+            .setCredentialStore(store).build();
+        
+        Credential credential = new GoogleCredential();
+
+        if(!store.load("service", credential)) {
+
+            if(authToken != null) {
+                try {
+                    GoogleTokenResponse response = flow.newTokenRequest(authToken).setRedirectUri(REDIRECT_URI).execute();
+                    credential = flow.createAndStoreCredential(response, "service");
+                    store.store("service", credential);
+                }
+                catch(Exception e) {
+                    String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
+                    throw new Exception("Authorization token expired, get a new one at " + url, e);   
+                }
+            }
+            else {
+                String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
+                throw new Exception("Application must be authorized at " + url);
+            }
+        }
+
+        return new Drive.Builder(httpTransport, jsonFactory, credential).build();
     }
 
-    public static Drive getDriveService(java.io.File googleAccessProperties, java.io.File googleClientProperties)
-        throws IOException, Exception {
-        HttpTransport httpTransport = new NetHttpTransport();
-        JsonFactory jsonFactory = new JacksonFactory();
 
-        return new Drive.Builder(httpTransport, jsonFactory, getCredential(googleAccessProperties, googleClientProperties)).build();
-    }
 
     /**
      * @parameter
@@ -131,7 +128,7 @@ public class ConnectMojo extends AbstractMojo
             throw new MojoExecutionException(googleClientProperties.getAbsolutePath() + " does not exists");
 
         try {
-            getCredential(googleAccessProperties, googleClientProperties);    
+            getDriveService(googleAccessProperties, googleClientProperties, getLog());    
         }
         catch(Exception e){
             throw new MojoExecutionException(e.getMessage(), e);
