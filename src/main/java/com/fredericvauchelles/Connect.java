@@ -48,13 +48,17 @@ public class Connect
     private static String REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
 
     public static Drive getDriveService(java.io.File googleClientProperties, Log logger)
+        throws IOException, Exception  {
+        return getDriveService(googleClientProperties, logger, null);
+    }
+
+    public static Drive getDriveService(java.io.File googleClientProperties, Log logger, String authToken)
         throws IOException, Exception {
 
         Properties clientProperties = new Properties();
         clientProperties.load(new FileInputStream(googleClientProperties));
         String clientId = clientProperties.getProperty("clientId");
         String clientSecret = clientProperties.getProperty("clientSecret");
-        String authToken = clientProperties.getProperty("authToken");
 
         HttpTransport httpTransport = new NetHttpTransport();
         JsonFactory jsonFactory = new JacksonFactory();
@@ -66,12 +70,6 @@ public class Connect
             throw new Exception("clientSecret is not defined in " + googleClientProperties.getAbsolutePath());
 
         MavenCredentialStore store = new MavenCredentialStore(logger);
-
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-            httpTransport, jsonFactory, clientId, clientSecret, Arrays.asList(DriveScopes.DRIVE))
-            .setAccessType("offline")
-            .setApprovalPrompt("auto")
-            .setCredentialStore(store).build();
         
         Credential credential = new GoogleCredential.Builder()
             .setTransport(httpTransport)
@@ -80,22 +78,7 @@ public class Connect
             .build();
 
         if(!store.load("service", credential)) {
-
-            if(authToken != null) {
-                try {
-                    GoogleTokenResponse response = flow.newTokenRequest(authToken).setRedirectUri(REDIRECT_URI).execute();
-                    credential = flow.createAndStoreCredential(response, "service");
-                    store.store("service", credential);
-                }
-                catch(Exception e) {
-                    String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
-                    throw new Exception("Authorization token expired, get a new one at " + url, e);   
-                }
-            }
-            else {
-                String url = flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI).build();
-                throw new Exception("Application must be authorized at " + url);
-            }
+            throw new Exception("There is no credential available, please use the @connect goal");
         }
 
         return new Drive.Builder(httpTransport, jsonFactory, credential).build();
