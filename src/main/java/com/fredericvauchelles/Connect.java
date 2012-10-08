@@ -43,20 +43,12 @@ import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Properties;
 
-/**
- *
- * @goal connect
- */
-public class ConnectMojo extends AbstractMojo
+public class Connect
 {
     private static String REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
 
-    public static Drive getDriveService(java.io.File googleAccessProperties, java.io.File googleClientProperties, Log logger)
+    public static Drive getDriveService(java.io.File googleClientProperties, Log logger)
         throws IOException, Exception {
-        // Properties accessProperties = new Properties();
-        // accessProperties.load(new FileInputStream(googleAccessProperties));
-        // String accessToken = accessProperties.getProperty("accessToken");
-        // String refreshToken = accessProperties.getProperty("refreshToken");
 
         Properties clientProperties = new Properties();
         clientProperties.load(new FileInputStream(googleClientProperties));
@@ -77,11 +69,15 @@ public class ConnectMojo extends AbstractMojo
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
             httpTransport, jsonFactory, clientId, clientSecret, Arrays.asList(DriveScopes.DRIVE))
-            .setAccessType("online")
+            .setAccessType("offline")
             .setApprovalPrompt("auto")
             .setCredentialStore(store).build();
         
-        Credential credential = new GoogleCredential();
+        Credential credential = new GoogleCredential.Builder()
+            .setTransport(httpTransport)
+            .setJsonFactory(jsonFactory)
+            .setClientSecrets(clientId, clientSecret)
+            .build();
 
         if(!store.load("service", credential)) {
 
@@ -103,35 +99,5 @@ public class ConnectMojo extends AbstractMojo
         }
 
         return new Drive.Builder(httpTransport, jsonFactory, credential).build();
-    }
-
-
-
-    /**
-     * @parameter
-     * @required
-     */
-    private java.io.File googleClientProperties;
-
-    /**
-     * @parameter
-     * @required
-     */
-    private java.io.File googleAccessProperties;
-
-    public void execute()
-        throws MojoExecutionException
-    {
-        getLog().info("Google Connect : OAuth2 authentification");
-
-        if(!googleClientProperties.exists())
-            throw new MojoExecutionException(googleClientProperties.getAbsolutePath() + " does not exists");
-
-        try {
-            getDriveService(googleAccessProperties, googleClientProperties, getLog());    
-        }
-        catch(Exception e){
-            throw new MojoExecutionException(e.getMessage(), e);
-        }
     }
 }

@@ -45,20 +45,13 @@ import java.util.Properties;
  *
  * @goal upload-file
  */
-public class UploadFileMojo
-    extends AbstractMojo
+public class UploadFileMojo extends AbstractMojo
 {
     /**
      * @parameter
      * @required
      */
     private java.io.File googleClientProperties;
-
-    /**
-     * @parameter
-     * @required
-     */
-    private java.io.File googleAccessProperties;
 
     /**
      * Location of the file.
@@ -73,14 +66,13 @@ public class UploadFileMojo
      */
     private String mimeType;
 
-    public void execute()
-        throws MojoExecutionException
+    public void execute() throws MojoExecutionException
     {
         getLog().debug("Start Upload File Mojo");
         getLog().info("Source file : " + source.getAbsolutePath());
 
         try{
-            Drive service = ConnectMojo.getDriveService(googleAccessProperties, googleClientProperties, getLog());
+            Drive service = Connect.getDriveService(googleClientProperties, getLog());
 
             //Insert a file  
             File body = new File();
