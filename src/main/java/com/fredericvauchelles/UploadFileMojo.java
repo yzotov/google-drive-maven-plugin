@@ -95,6 +95,7 @@ public class UploadFileMojo extends AbstractMojo
                 ChildReference child = new ChildReference();
                 child.setId(file.getId());
                 service.children().insert(parentId, child).execute();
+                service.parents().delete(file.getId(), "root").execute();
             }
 
             getLog().info("File ID: " + file.getId());
