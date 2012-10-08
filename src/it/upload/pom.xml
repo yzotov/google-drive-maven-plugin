@@ -34,6 +34,7 @@
           <googleAccessProperties>src/main/resources/googleDrive.tmp.properties</googleAccessProperties>
           <mimeType>text/plain</mimeType>
           <source>src/main/resources/file.txt</source>
+          <parentId>0B83OFWnNIeScZHVZdW5ab21mVGs</parentId>
         </configuration>
         <executions>
           <execution>

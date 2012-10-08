@@ -30,6 +30,8 @@ import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.ParentReference;
+import com.google.api.services.drive.model.ChildReference;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,6 +68,11 @@ public class UploadFileMojo extends AbstractMojo
      */
     private String mimeType;
 
+    /**
+     * @parameter
+     */
+    private String parentId;
+
     public void execute() throws MojoExecutionException
     {
         getLog().debug("Start Upload File Mojo");
@@ -83,6 +90,13 @@ public class UploadFileMojo extends AbstractMojo
             FileContent mediaContent = new FileContent(mimeType, source);
 
             File file = service.files().insert(body, mediaContent).execute();
+
+            if(parentId != null) {
+                ChildReference child = new ChildReference();
+                child.setId(file.getId());
+                service.children().insert(parentId, child).execute();
+            }
+
             getLog().info("File ID: " + file.getId());
         }
         catch(Exception e) {
