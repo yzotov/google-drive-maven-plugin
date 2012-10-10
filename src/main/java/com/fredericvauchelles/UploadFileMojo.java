@@ -105,7 +105,10 @@ public class UploadFileMojo extends AbstractMojo
                 }
 
                 getLog().info("File ID: " + file.getId());
-            }            
+            }
+
+            getLog().info("Number of file sent : " + includedFiles.length);
+            
         }
         catch(Exception e) {
             throw new MojoExecutionException(e.getMessage(), e);
