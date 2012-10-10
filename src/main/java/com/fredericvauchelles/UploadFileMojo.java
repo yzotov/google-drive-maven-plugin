@@ -98,11 +98,14 @@ public class UploadFileMojo extends AbstractMojo
                 File file = service.files().insert(body, mediaContent).execute();
 
                 if(parentId != null) {
+                    getLog().info("Setting parent " + parentId);
                     ChildReference child = new ChildReference();
                     child.setId(file.getId());
                     service.children().insert(parentId, child).execute();
                     service.parents().delete(file.getId(), "root").execute();
                 }
+                else
+                    getLog().info("No parent");
 
                 getLog().info("File ID: " + file.getId());
             }
