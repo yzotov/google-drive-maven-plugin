@@ -81,7 +81,7 @@ public class UploadFileMojo extends AbstractMojo
         try{
             Drive service = Connect.getDriveService(googleClientProperties, getLog());
 
-            FileSetManager fileSetManager = new FileSetManager();
+            FileSetManager fileSetManager = new FileSetManager(getLog());
             String[] includedFiles = fileSetManager.getIncludedFiles( fileset );
 
             for(String sourceString : includedFiles) {
@@ -108,7 +108,7 @@ public class UploadFileMojo extends AbstractMojo
             }
 
             getLog().info("Number of file sent : " + includedFiles.length);
-            
+
         }
         catch(Exception e) {
             throw new MojoExecutionException(e.getMessage(), e);
