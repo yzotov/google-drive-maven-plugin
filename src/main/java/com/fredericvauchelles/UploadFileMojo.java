@@ -16,8 +16,9 @@ package com.fredericvauchelles;
  * limitations under the License.
  */
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.*;
+import org.apache.maven.shared.model.fileset.util.*;
+import org.apache.maven.shared.model.fileset.FileSet;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -60,7 +61,7 @@ public class UploadFileMojo extends AbstractMojo
      * @parameter 
      * @required
      */
-    private java.io.File source;
+    private FileSet fileset;
 
     /**
      * @paramter
@@ -76,29 +77,35 @@ public class UploadFileMojo extends AbstractMojo
     public void execute() throws MojoExecutionException
     {
         getLog().debug("Start Upload File Mojo");
-        getLog().info("Source file : " + source.getAbsolutePath());
 
         try{
             Drive service = Connect.getDriveService(googleClientProperties, getLog());
 
-            //Insert a file  
-            File body = new File();
-            body.setTitle(source.getName());
-            //body.setDescription("A test document");
-            body.setMimeType(mimeType);
-            
-            FileContent mediaContent = new FileContent(mimeType, source);
+            FileSetManager fileSetManager = new FileSetManager();
+            String[] includedFiles = fileSetManager.getIncludedFiles( fileset );
 
-            File file = service.files().insert(body, mediaContent).execute();
+            for(String sourceString : includedFiles) {
+                java.io.File source = new java.io.File(fileset.getDirectory(), sourceString);
+                getLog().debug("Sending file : " + source.getAbsolutePath());
+                //Insert a file  
+                File body = new File();
+                body.setTitle(source.getName());
+                //body.setDescription("A test document");
+                body.setMimeType(mimeType);
+                
+                FileContent mediaContent = new FileContent(mimeType, source);
 
-            if(parentId != null) {
-                ChildReference child = new ChildReference();
-                child.setId(file.getId());
-                service.children().insert(parentId, child).execute();
-                service.parents().delete(file.getId(), "root").execute();
-            }
+                File file = service.files().insert(body, mediaContent).execute();
 
-            getLog().info("File ID: " + file.getId());
+                if(parentId != null) {
+                    ChildReference child = new ChildReference();
+                    child.setId(file.getId());
+                    service.children().insert(parentId, child).execute();
+                    service.parents().delete(file.getId(), "root").execute();
+                }
+
+                getLog().info("File ID: " + file.getId());
+            }            
         }
         catch(Exception e) {
             throw new MojoExecutionException(e.getMessage(), e);

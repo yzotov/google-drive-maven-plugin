@@ -31,9 +31,13 @@
         <version>1.0-SNAPSHOT</version>
         <configuration>
           <googleClientProperties>src/main/resources/googleDrive.properties</googleClientProperties>
-          <googleAccessProperties>src/main/resources/googleDrive.tmp.properties</googleAccessProperties>
           <mimeType>text/plain</mimeType>
-          <source>src/main/resources/file.txt</source>
+          <fileset>
+            <directory>src/main/resources</directory>
+            <includes>
+              <include>file.txt</include>
+            </includes>
+          </fileset>
           <parentId>0B83OFWnNIeScZHVZdW5ab21mVGs</parentId>
         </configuration>
         <executions>
