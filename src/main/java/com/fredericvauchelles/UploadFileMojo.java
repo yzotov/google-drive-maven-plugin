@@ -86,7 +86,7 @@ public class UploadFileMojo extends AbstractMojo
 
             for(String sourceString : includedFiles) {
                 java.io.File source = new java.io.File(fileset.getDirectory(), sourceString);
-                getLog().debug("Sending file : " + source.getAbsolutePath());
+                getLog().info("Sending file : " + sourceString);
                 //Insert a file  
                 File body = new File();
                 body.setTitle(source.getName());
