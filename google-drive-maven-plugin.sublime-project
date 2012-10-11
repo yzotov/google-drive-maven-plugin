@@ -24,10 +24,12 @@
                     ]
                 },
                 {
-                    "name": "Integration Test",
+                    "name": "Deploy",
                     "cmd": [
                         "mvn",
-                        "integration-test:integration-test"
+                        "clean",
+                        "deploy",
+                        "-Dinvoker.skip=true"
                     ]
                 }
             ]

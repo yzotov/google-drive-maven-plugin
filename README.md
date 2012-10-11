@@ -36,7 +36,8 @@ authToken=<YOUR GENERATED AUTHORIZATION TOKEN>
 Relaunch the command :
 mvn google-drive-maven-plugin:connect
 
-This time, it must succeed. At this point, maven will have created a file to store an access token and a refresh token to use Google Drive API.
+This time, it must succeed. At this point, maven will ha
+ve created a file to store an access token and a refresh token to use Google Drive API.
 
 Upload file
 ----------------------
