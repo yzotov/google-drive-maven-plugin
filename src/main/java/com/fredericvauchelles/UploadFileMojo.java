@@ -28,11 +28,11 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson.JacksonFactory;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.*;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.ParentReference;
 import com.google.api.services.drive.model.ChildReference;
+import com.google.api.services.drive.Drive.Files.Insert;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -95,7 +95,9 @@ public class UploadFileMojo extends AbstractMojo
                 
                 FileContent mediaContent = new FileContent(mimeType, source);
 
-                File file = service.files().insert(body, mediaContent).execute();
+                Insert insert = service.files().insert(body, mediaContent);
+                insert.getMediaHttpUploader().setDirectUploadEnabled(true);
+                File file = insert.execute();
 
                 if(parentId != null) {
                     getLog().info("Setting parent " + parentId);
