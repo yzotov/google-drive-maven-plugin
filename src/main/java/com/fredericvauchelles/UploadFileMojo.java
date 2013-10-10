@@ -19,6 +19,7 @@ package com.fredericvauchelles;
 import org.apache.maven.plugin.*;
 import org.apache.maven.shared.model.fileset.util.*;
 import org.apache.maven.shared.model.fileset.FileSet;
+import org.apache.maven.project.MavenProject;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -42,6 +43,8 @@ import java.io.InputStreamReader;
 import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Goal which touches a timestamp file.
@@ -50,6 +53,14 @@ import java.util.Properties;
  */
 public class UploadFileMojo extends AbstractMojo
 {
+    /**
+    * The maven project.
+    *
+    * @parameter expression="${project}"
+    * @readonly
+    */
+    private MavenProject project;
+
     /**
      * @parameter
      * @required
@@ -91,6 +102,8 @@ public class UploadFileMojo extends AbstractMojo
             FileSetManager fileSetManager = new FileSetManager(getLog());
             String[] includedFiles = fileSetManager.getIncludedFiles( fileset );
 
+            Map<String,File> files = new HashMap<String,File>();
+
             for(String sourceString : includedFiles) {
                 java.io.File source = new java.io.File(fileset.getDirectory(), sourceString);
                 getLog().info("Sending file : " + sourceString);
@@ -116,8 +129,12 @@ public class UploadFileMojo extends AbstractMojo
                 else
                     getLog().info("No parent");
 
+                files.put( sourceString, file );
+
                 getLog().info("File ID: " + file.getId());
             }
+
+            project.getProperties().put( "google-drive-maven-plugin.uploadedFiles", files );
 
             getLog().info("Number of file sent : " + includedFiles.length);
 
